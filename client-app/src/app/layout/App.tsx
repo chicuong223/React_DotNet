@@ -1,10 +1,12 @@
 import React, { useState, useEffect, Fragment } from "react";
 import { Container } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
-import axios from "axios";
 import { IActivity } from "../models/activity";
 import NavBar from "../../features/nav/NavBar";
 import ActivityDashboard from "../../features/activities/dashboard/ActivityDashboard";
+import agent from "../api/agent";
+import { LoadingComponent } from "./LoadingComponent";
+import { SyntheticEvent } from "react";
 
 /*convert to ReactHook
 remove class
@@ -22,6 +24,9 @@ const App = () => {
     null
   );
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmiting] = useState(false);
+  const [target, setTarget] = useState(''); //button that being clicked
 
   const handleSelectActivity = (id: string) => {
     //find the activity that has the id, set it to state selectedActivity
@@ -36,51 +41,65 @@ const App = () => {
   };
 
   const handleCreateActivity = (activity: IActivity) => {
-    //spread the activities into an array, then add the new activity into the array
-    setActivities([...activities, activity]);
-    //display the new activity
-    setSelectedActivity(activity);
-    //close the form
-    setEditMode(false);
+    setSubmiting(true);
+    //call create from agent
+    //agent sends request to API to add the activity in Database
+    //after that, handle data on the client side
+    agent.Activities.create(activity).then(() => {
+      //spread the activities into an array, then add the new activity into the array
+      setActivities([...activities, activity]);
+      //display the new activity
+      setSelectedActivity(activity);
+      //close the form
+      setEditMode(false);
+    }).then(() => setSubmiting(false));
   };
 
   const handleEditActivity = (activity: IActivity) => {
-    //spread all activities that does not have the same id as the selected activity
-    //into an array, then add the edited one into the array
-    setActivities([
-      ...activities.filter((a) => a.id !== activity.id),
-      activity,
-    ]);
-    setSelectedActivity(activity);
-    setEditMode(false);
+    setSubmiting(true);
+    agent.Activities.update(activity).then(() => {
+      //spread all activities that does not have the same id as the selected activity
+      //into an array, then add the edited one into the array
+      setActivities([
+        ...activities.filter((a) => a.id !== activity.id),
+        activity,
+      ]);
+      setSelectedActivity(activity);
+      setEditMode(false);
+    }).then(() => setSubmiting(false));
   };
 
-  const handleDeleteActivity = (id: string) =>{
-    //set actitivities to the ones that the not have the deleted id
-    setActivities([...activities.filter(a => a.id !== id)]);
-  }
+  const handleDeleteActivity = (event: SyntheticEvent<HTMLButtonElement>, id: string) => {
+    setSubmiting(true);
+    setTarget(event.currentTarget.name);
+    agent.Activities.delete(id).then(() => {
+      //set actitivities to the ones that the not have the deleted id
+      setActivities([...activities.filter((a) => a.id !== id)]);
+    }).then(() => setSubmiting(false));
+  };
 
   useEffect(() => {
     //connect to the api, values controller using GET method
     //returns a response object
     //set data from response to state (like AJAX)
     //returned response is of type IActivity[]
-    axios
-      .get<IActivity[]>("http://localhost:5000/api/activities")
-      .then((response) => {
-        let activities: IActivity[] = [];
-        response.data.forEach((activity) => {
-          //after get the date from the API
-          //split and get the first part of the date
-          //so that we can assign the date value
-          //into the form component
-          activity.date = activity.date.split(".")[0];
-          activities.push(activity);
-        });
-        //set what is rendered on the page, may cause re-rendering
-        setActivities(activities);
+    agent.Activities.list().then((response) => {
+      let activities: IActivity[] = [];
+      response.forEach((activity) => {
+        //after getting the date from the API
+        //split and get the first part of the date
+        //so that we can assign the date value
+        //into the form component
+        activity.date = activity.date.split(".")[0];
+        activities.push(activity);
       });
+      //set what is rendered on the page, may cause re-rendering
+      setActivities(activities);
+    }).then(() => setLoading(false)); //after setting activities, close the loading component
   }, []); //pass the second parameter an empty to prevent the method running multiple times
+
+  //if loading state is true, render the loading component
+  if(loading) return <LoadingComponent content='Loading activities...' />
 
   //Fragment: allows returning multiple elements
   return (
@@ -97,6 +116,8 @@ const App = () => {
           createActivity={handleCreateActivity}
           editActivity={handleEditActivity}
           deleteActivity={handleDeleteActivity}
+          submitting={submitting}
+          target={target}
         />
       </Container>
     </Fragment>

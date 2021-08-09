@@ -35,7 +35,7 @@ namespace Application.Activities
 
                 activity.Title = request.Title ?? activity.Title;   //if request.Title == null, runs the code on the right
                 activity.Description = request.Description ?? activity.Description;
-                activity.Category = request.Description ?? activity.Category;
+                activity.Category = request.Category ?? activity.Category;
                 activity.Date = request.Date ?? activity.Date;
                 activity.City = request.City ?? activity.City;
                 activity.Venue = request.Venue ?? activity.Venue;

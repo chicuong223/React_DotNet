@@ -8,6 +8,7 @@ interface IProps {
   activity: IActivity; //initial form state
   createActivity: (activity: IActivity) => void;
   editActivity: (activity: IActivity) => void;
+  submitting: boolean;
 }
 
 const ActivityForm: React.FC<IProps> = ({
@@ -15,6 +16,7 @@ const ActivityForm: React.FC<IProps> = ({
   activity: initialFormState, //initialFormState is activity, do this to prevent duplicated error
   createActivity,
   editActivity,
+  submitting
 }) => {
   const initializeForm = () => {
     if (initialFormState) return initialFormState;
@@ -53,7 +55,7 @@ const ActivityForm: React.FC<IProps> = ({
   };
 
   return (
-    <Segment clearing>
+    <Segment clearing style={{position: 'fixed'}}>
       <Form onSubmit={handleSubmit}>
         <Form.Input
           onChange={handleInputChange}
@@ -93,7 +95,7 @@ const ActivityForm: React.FC<IProps> = ({
           onChange={handleInputChange}
           name="venue"
         />
-        <Button floated="right" positive type="submit" content="Submit" />
+        <Button loading={submitting} floated="right" positive type="submit" content="Submit" />
         <Button
           floated="right"
           type="button"

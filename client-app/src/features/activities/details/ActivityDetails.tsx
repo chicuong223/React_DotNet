@@ -10,7 +10,7 @@ interface IProps {
 
 const ActivityDetails: React.FC<IProps> = ({ activity, setEditMode, setSelectedActivity }) => {
   return (
-    <Card fluid>
+    <Card style={{position: 'fixed'}}>
       <Image
         src={`/assets/categoryImages/${activity.category}.jpg`}
         wrapped
